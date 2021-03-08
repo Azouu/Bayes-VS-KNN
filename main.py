@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import os
 from sklearn.model_selection import train_test_split
 import csv
-import Bayes
+from Bayes import GaussianBayes
 
 # Types de consonnes
 cons_types = ["aa", "ee", "eh", "eu", "ii", "oe", "oh", "oo", "uu", "yy"]
@@ -69,8 +69,14 @@ def plot_scatter_2d(data,labels) :
 if __name__ == '__main__':
     path = './Data'
     X, y = load_dataset(os.path.join(path, files[0]))
-    plot_scatter_2d(X,y)
+    #plot_scatter_2d(X,y)
     # create training and test sets
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.20, random_state=0)
+
+    gb = GaussianBayes(priors=None)
+    gb.fit(X_train,y_train)
+    score = gb.score(X_test,y_test)
+    print("Score : {}".format(score))
+
 
 
