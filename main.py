@@ -5,6 +5,7 @@
 
 # Imports
 import numpy as np
+import matplotlib.pyplot as plt
 import os
 
 # Types de consonnes
@@ -36,7 +37,14 @@ def get_data(path):
         data.append(temp_e)
     return np.array(data)
 
+def plot_scatter_2d(data) :
+    for x in data :
+        plt.scatter(x[:,1], x[:,0], s=20, alpha=0.5)
+    plt.legend(cons_types)
+    plt.show()
+
 # Programme principal
 if __name__ == '__main__':
-    data = get_data(os.path.join("Données", files[0]))
-    print(data)
+    path = './Data'
+    data = get_data(os.path.join(path, files[0]))
+    plot_scatter_2d(data)
