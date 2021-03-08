@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import os
 from sklearn.model_selection import train_test_split
 import csv
+import Bayes
 
 # Types de consonnes
 cons_types = ["aa", "ee", "eh", "eu", "ii", "oe", "oh", "oo", "uu", "yy"]
