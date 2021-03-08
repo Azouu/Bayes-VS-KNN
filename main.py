@@ -69,6 +69,7 @@ if __name__ == '__main__':
     path = './Data'
     X, y = load_dataset(os.path.join(path, files[0]))
     plot_scatter_2d(X,y)
-
+    # create training and test sets
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.20, random_state=0)
 
 
