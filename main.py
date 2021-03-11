@@ -53,6 +53,7 @@ def plot_confusion_matrix(y_test:np.ndarray, y_pred:np.ndarray, features:np.ndar
 # Programme principal
 if __name__ == '__main__':
     path = 'Data'
+    knn_scores = []
     for f in range(len(files)):
         X, y = load_dataset(os.path.join(path, files[f]))
         #plot_scatter_2d(X,y)
@@ -61,7 +62,7 @@ if __name__ == '__main__':
         #print("X_test: {}".format(X_test))
         #print("y_train: {}".format(y_train))
         #print("y_test: {}".format(y_test))
-
+        
         # Classification KPPV (KNN)
         n_neighbors = len(cons_types)
         n_test_items = len(X_test)
@@ -73,3 +74,13 @@ if __name__ == '__main__':
         print("Taux de reconnaissance ({}) : {}/{}".format(files[f], knn_good_predictions, n_test_items))
         knn_score = knn_good_predictions / n_test_items
         print("Score de précision associé ({}) : {}".format(files[f], knn_score))
+        
+        # Récupération des scores
+        knn_scores.append(knn_score)
+    
+    # Courbe d'évolution de la précision pour le classifieur KPPV
+    plt.plot(knn_scores)
+    plt.xticks(np.arange(len(files)), files)
+    plt.ylabel("Score de précision")
+    plt.xlabel("Nombre de dimensions")
+    plt.title("Evolution du score de précision pour KPPV")
