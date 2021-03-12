@@ -41,9 +41,13 @@ def plot_scatter_2d(X:np.ndarray, y:np.ndarray) -> None:
     
 # Affichage d'une matrice de confusion
 def plot_confusion_matrix(y_test:np.ndarray, y_pred:np.ndarray, features:np.ndarray, c_name:str, f_name:str) -> None:
-    plt.imshow(confusion_matrix(y_test, y_pred))
+    cm = confusion_matrix(y_test, y_pred)
+    plt.imshow(cm)
     plt.xticks(np.arange(len(features)), features, rotation=45)
     plt.yticks(np.arange(len(features)), features)
+    for i in range(len(features)):
+        for j in range(len(features)):
+            plt.text(i, j, str(cm[i][j]), size='small', ha='center', va='center')
     plt.ylabel("Véritable classe associée")
     plt.xlabel("Classe prédite")
     plt.title("Matrice de confusion pour {} ({})".format(c_name, f_name))
