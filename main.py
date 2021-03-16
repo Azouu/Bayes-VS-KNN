@@ -43,23 +43,22 @@ def plot_scatter_2d(X:np.ndarray, y:np.ndarray) -> None:
     plt.show()
     
 # Affichage d'une matrice de confusion
-def plot_confusion_matrix(i:int, y_test:np.ndarray, y_pred:np.ndarray, features:np.ndarray, 
-                          distribution:float, rr1:int, rr2:int) -> None:
+def plot_confusion_matrix(y_test:np.ndarray, y_pred:np.ndarray, features:np.ndarray, c_name:str, f_name:str, distribution:float, rr1:int, rr2:int) -> None:
     cm = confusion_matrix(y_test, y_pred)
-    ax = plt.subplot(3, 3, i + 1) # len(distribs) = 9 donc 3 x 3
-    ax.imshow(cm)
-    ax.set_xticks(np.arange(len(features)))
-    ax.set_yticks(np.arange(len(features)))
-    ax.set_xticklabels(features)
-    ax.set_yticklabels(features)
+    plt.figure()
+    plt.imshow(cm)
+    plt.xticks(np.arange(len(features)), features)
+    plt.yticks(np.arange(len(features)), features)
     for i in range(len(features)):
         for j in range(len(features)):
-            ax.text(i, j, str(cm[i][j]), size='small', ha='center', va='center')
-    ax.set_ylabel("Véritable classe associée (y_gold)", fontsize=8)
-    ax.set_xlabel("Classe prédite (y_pred)", fontsize=8)
-    ax.set_title("d={}/{} | rr={}/{}".format(int(np.around(distribution*100.,0)), 
-                                               int(np.around((1.-distribution)*100.,0)), rr1, rr2), fontsize=10)
-
+            plt.text(i, j, str(cm[i][j]), size='small', ha='center', va='center')
+    plt.ylabel("Véritable classe associée (y_gold)")
+    plt.xlabel("Classe prédite (y_pred)")
+    plt.suptitle("Matrice de confusion du classifieur {}".format(c_name))
+    plt.title("{} | d={}/{} | rr={}/{}".format(f_name, int(np.around(distribution*100.,0)), int(np.around((1.-distribution)*100.,0)), rr1, rr2), fontsize=10)
+    plt.colorbar()
+    plt.show()
+    
 # Affichage d'un graphe d'évolution du score de précision
 def plot_accur_evolution(scores:np.ndarray, distribution:np.array, dims:np.ndarray) -> None:
     plt.figure()
@@ -82,7 +81,7 @@ if __name__ == '__main__':
         X, y = load_dataset(os.path.join(path, files[f]))
         #plot_scatter_2d(X,y)
         dimensions.append(X.shape[-1])
-        plt.figure(figsize=(12., 13.))
+        print("Avec {} dimensions :".format(dimensions[f]))
         for d in range(len(distribs)):
             X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=distribs[d], random_state=0)
             #print("X_train: {}".format(X_train))
@@ -97,15 +96,13 @@ if __name__ == '__main__':
             knn.fit(X_train, y_train)
             knn_predictions = knn.predict(X_test)
             knn_good_predictions = np.sum(y_test == knn_predictions)
-            plot_confusion_matrix(d, y_test, knn_predictions, cons_types, distribs[d], 
-                                  knn_good_predictions, n_test_items)
+            plot_confusion_matrix(y_test, knn_predictions, cons_types, "KPPV", files[f], distribs[d], knn_good_predictions, n_test_items)
 
             # Récupération des scores
             file_knn_score = knn_good_predictions / n_test_items
             file_knn_scores.append(file_knn_score)
-        plt.suptitle("Matrices de confusion pour KPPV avec {} dimensions :".format(dimensions[f]), y=.92)
-        plt.show()
         knn_scores.append(file_knn_scores)
+        print("---------------------------------------------------------")
 
     # Courbe d'évolution de la précision pour le classifieur KPPV
     plot_accur_evolution(knn_scores, distribs, dimensions)
