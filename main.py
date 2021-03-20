@@ -70,10 +70,11 @@ def plot_scatter_2d(data,labels) :
 # Programme principal
 if __name__ == '__main__':
     path = './Data'
-    X, y = load_dataset(os.path.join(path, files[0]))
+    X, y = load_dataset(os.path.join(path, files[2]))
     #plot_scatter_2d(X,y)
     # create training and test sets
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.20, random_state=5)
+    random_state = 50
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.20, random_state=random_state)
 
     gb = GaussianBayes(priors=None)
     gb.fit(X_train,y_train)
@@ -82,8 +83,15 @@ if __name__ == '__main__':
 
     y_pred = gb.predict(X_test)
     matrix = confusion_matrix(y_test, y_pred)
-    sns.heatmap(matrix, annot=True)
+    #sns.heatmap(matrix, annot=True)
 
+    scores = []
+    test_size = np.arange(0.2, 0.7,0.1)
+    for i in test_size:
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=i, random_state=random_state)
+        scores.append(gb.score(X_test,y_test))
+    plt.plot(test_size, scores)
+    plt.show()
 
 
 
