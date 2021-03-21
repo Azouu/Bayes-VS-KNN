@@ -1,5 +1,6 @@
 import numpy as np
-
+from decimal import Decimal
+import math
 class GaussianBayes(object):
     """ Classification by normal law by Bayesian approach
     """
@@ -36,6 +37,7 @@ class GaussianBayes(object):
         X shape = [n_samples, n_features]
         maximum log-likelihood
         """
+        np.seterr(all='raise')
         n_obs = X.shape[0]
         n_classes = self.mu.shape[0]
         n_features = self.mu.shape[1]
@@ -46,8 +48,15 @@ class GaussianBayes(object):
             scores = np.empty(n_classes)
             x = X[i]
             for j in range(n_classes):
+                #print(self.sigma[j])
+                try :
+                    np.log(Decimal(np.linalg.det(self.sigma[j])))
+                except :
+                    print(n_features)
+                    #print(Decimal(np.linalg.det(self.sigma[j])))
+                #print(np.linalg.det(self.sigma[j]))
                 score = - (1/2) * (np.log(np.linalg.det(self.sigma[j])) + np.dot(np.dot((x - self.mu[j]), np.linalg.inv(self.sigma[j])), (x - self.mu[j])))
-                if self.priors is not None :
+                if self.priors is not None:
                     score += np.log(self.priors[j])
                 scores[j] = score
             y[i] = np.argmax(scores)

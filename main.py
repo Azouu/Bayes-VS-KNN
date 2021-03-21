@@ -66,7 +66,7 @@ def plot_confusion_matrix(i:int, y_test:np.ndarray, y_pred:np.ndarray, features:
                                                      fontsize=10)
 
 # Affichage d'un graphe d'évolution selon la distribution des données de test
-def plot_accur_evolution(scores:np.ndarray, distribution:np.array, dims:np.ndarray, y_label:str) -> None:
+def plot_accur_evolution(title:str, scores:np.ndarray, distribution:np.array, dims:np.ndarray, y_label:str) -> None:
     plt.figure()
     for e in scores:
         plt.plot(e)
@@ -74,74 +74,89 @@ def plot_accur_evolution(scores:np.ndarray, distribution:np.array, dims:np.ndarr
     plt.ylabel(y_label)
     plt.xlabel("Distribution des données de test")
     plt.legend(dims, title="Dimensions\ndes données")
-    plt.title("Evolution du {} pour KPPV".format(y_label.lower()))
+    plt.title("Evolution du {} pour {}".format(y_label.lower(),title))
     plt.show()
 
 # Programme principal
 if __name__ == '__main__':
     path = './Data'
-    X, y = load_dataset(os.path.join(path, files[2]))
-    #plot_scatter_2d(X,y)
-    # create training and test sets
-    random_state = 50
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.20, random_state=random_state)
-
-    gb = GaussianBayes(priors=None)
-    gb.fit(X_train,y_train)
-    score = gb.score(X_test,y_test)
-    print("Score : {}".format(score))
-
-    y_pred = gb.predict(X_test)
-    matrix = confusion_matrix(y_test, y_pred)
-    #sns.heatmap(matrix, annot=True)
-
-    scores = []
-    test_size = np.arange(0.2, 0.7,0.1)
-    for i in test_size:
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=i, random_state=random_state)
-        scores.append(gb.score(X_test,y_test))
-    plt.plot(test_size, scores)
-    plt.show()
-
-    path = 'Data'
+    bayes_scores = []
+    exec_time_t_bayes = []
     knn_scores = []
-    exec_time_t = []
+    exec_time_t_knn = []
     dimensions = []
     for f in range(len(files)):
         file_knn_scores = []
-        file_exec_time = []
+        file_bayes_scores = []
+        file_exec_time_knn = []
+        file_exec_time_bayes = []
         X, y = load_dataset(os.path.join(path, files[f]))
         #plot_scatter_2d(X,y)
         dimensions.append(X.shape[-1])
-        plt.figure(figsize=(12., 13.))
+        # plt.figure(figsize=(12., 13.))
         for d in range(len(distribs)):
-            start = time.perf_counter()
             X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=distribs[d], random_state=0)
             #print("X_train: {}".format(X_train))
             #print("X_test: {}".format(X_test))
             #print("y_train: {}".format(y_train))
             #print("y_test: {}".format(y_test))
 
-            # Classification KPPV (KNN)
             n_neighbors = len(cons_types)
             n_test_items = len(X_test)
+
+            # Classification Bayes
+            gb = GaussianBayes(priors=None)  # Comme on considère que les priors de KNN sont uniformes, on fait de même pour Bayes
+            start = time.perf_counter()
+            gb.fit(X_train, y_train)
+            file_bayes_score = gb.score(X_test, y_test)
+            stop = time.perf_counter()
+            bayes_predictions = gb.predict(X_test)
+            bayes_good_predictions = np.sum(y_test == bayes_predictions)
+            # plt.figure(0)
+            #plot_confusion_matrix(d, y_test, bayes_predictions, cons_types, distribs[d],
+            #                        bayes_good_predictions, n_test_items, stop - start)
+
+
+            # Récupération des scores pour Bayes
+            file_bayes_scores.append(file_bayes_score)
+            file_exec_time_bayes.append(stop - start)
+
+            # Classification KPPV (KNN)
             knn = KNeighborsClassifier(n_neighbors=n_neighbors)
+            start = time.perf_counter()
             knn.fit(X_train, y_train)
+            file_knn_score = knn.score(X_test, y_test)
+            stop = time.perf_counter()
             knn_predictions = knn.predict(X_test)
             knn_good_predictions = np.sum(y_test == knn_predictions)
-            stop = time.perf_counter()
-            plot_confusion_matrix(d, y_test, knn_predictions, cons_types, distribs[d],
-                                  knn_good_predictions, n_test_items, stop - start)
+            # plt.figure(1)
+            #plot_confusion_matrix(d, y_test, knn_predictions, cons_types, distribs[d],
+            #                      knn_good_predictions, n_test_items, stop - start)
 
-            # Récupération des scores
-            file_knn_score = knn_good_predictions / n_test_items
+            # Récupération des scores pour KNN
             file_knn_scores.append(file_knn_score)
-            file_exec_time.append(stop - start)
-        plt.suptitle("Matrices de confusion pour KPPV avec {} dimensions :".format(dimensions[f]), y=.92)
-        plt.show()
+            file_exec_time_knn.append(stop - start)
+
+        # plt.figure(0)
+        # plt.suptitle("Matrices de confusion pour Bayes avec {} dimensions :".format(dimensions[f]), y=.92)
+        # #plt.show()
+        #
+        # plt.figure(1)
+        # plt.suptitle("Matrices de confusion pour KPPV avec {} dimensions :".format(dimensions[f]), y=.92)
+        #plt.show()
+
+        bayes_scores.append(file_bayes_score)
+        exec_time_t_bayes.append(file_exec_time_bayes)
+
         knn_scores.append(file_knn_scores)
-        exec_time_t.append(file_exec_time)
+        exec_time_t_knn.append(file_exec_time_knn)
+
+
+
+    # Courbe d'évolution de la précision pour le classifieur Bayes
+    #plot_accur_evolution("Bayes", bayes_scores, distribs, dimensions, "Score de précision")
+    #plot_accur_evolution("Bayes", exec_time_t_bayes, distribs, dimensions, "Temps d'exécution")
 
     # Courbe d'évolution de la précision pour le classifieur KPPV
-    plot_accur_evolution(knn_scores, distribs, dimensions, "Score de précision")
-    plot_accur_evolution(exec_time_t, distribs, dimensions, "Temps d'exécution")
+    #plot_accur_evolution("KPPV", knn_scores, distribs, dimensions, "Score de précision")
+    #plot_accur_evolution("Bayes",exec_time_t_knn, distribs, dimensions, "Temps d'exécution")
