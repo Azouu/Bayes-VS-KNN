@@ -20,16 +20,14 @@ class GaussianBayes(object):
         y : shape (n_data)
         """
         # number of random variables and classes
-        n_features = X.shape[1]
+        #n_features = X.shape[1]
         n_classes = len(np.unique(y))
         # initialization of parameters
-        self.mu = np.zeros((n_classes, n_features))
-        self.sigma = np.zeros((n_classes, n_features, n_features))
+        #self.mu = np.zeros((n_classes, n_features))
+        #self.sigma = np.zeros((n_classes, n_features, n_features))
         # learning
-        for i in range(n_classes):
-            xi = X[y == i]
-            self.mu[i] = np.mean(xi, axis=0)
-            self.sigma[i] = np.cov(xi.T)
+        self.mu = np.array([X[np.where(y==i)].mean(axis=0) for i in range(n_classes)])
+        self.sigma = np.array([np.cov(X[np.where(y==i)].T) for i in range(n_classes)])
 
 
     def predict(self, X:np.ndarray) -> np.ndarray:
@@ -41,22 +39,19 @@ class GaussianBayes(object):
         n_obs = X.shape[0]
         n_classes = self.mu.shape[0]
         n_features = self.mu.shape[1]
-
+        coeff = - n_features / 2 * np.log(2 * np.pi)
         # initalize the output vector
         y = np.empty(n_obs)
         for i in range(n_obs) :
             scores = np.empty(n_classes)
-            x = X[i]
-            for j in range(n_classes):
+            for j in range(n_classes) :
+                x_sub_mu = X[i] - self.mu[j]
                 try :
-                    score = - (1/2) * (np.log(np.linalg.det(self.sigma[j])) + np.dot(np.dot((x - self.mu[j]), np.linalg.inv(self.sigma[j])), (x - self.mu[j])))
+                    scores[j] = coeff - (1/2) * (np.log(np.linalg.det(self.sigma[j])) + x_sub_mu.T @ np.linalg.inv(self.sigma[j]) @ x_sub_mu)
                     if self.priors is not None:
-                        score += np.log(self.priors[j])
+                        scores[j] += np.log(self.priors[j])
                 except :
-                    # when there isn't enough training data, an exception will ocur because log function cannot be performed
-                    # we deal with it here
-                    score = None
-                scores[j] = score
+                    scores[j] = 0
             y[i] = np.argmax(scores)
         return y
 

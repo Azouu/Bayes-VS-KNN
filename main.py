@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import os
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.naive_bayes import GaussianNB
 from sklearn.metrics import confusion_matrix
 import csv
 from Bayes import GaussianBayes
@@ -97,7 +98,7 @@ if __name__ == '__main__':
         fig_bayes = plt.figure(figsize=(12., 24.))
         fig_knn = plt.figure(figsize=(12., 24.))
         for d in range(len(distribs)):
-            X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=distribs[d], random_state=5)
+            X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=distribs[d], random_state=46)
             #print("X_train: {}".format(X_train))
             #print("X_test: {}".format(X_test))
             #print("y_train: {}".format(y_train))
@@ -106,15 +107,15 @@ if __name__ == '__main__':
             n_neighbors = len(cons_types)
             n_test_items = len(X_test)
             # Classification Bayes
-            gb = GaussianBayes(priors=None)  # Comme on considère que les priors de KNN sont uniformes, on fait de même pour Bayes
-            start = time.perf_counter()
+            gb = GaussianBayes(priors=None) # Comme on considère que les priors de KNN sont uniformes, on fait de même pour Bayes
             gb.fit(X_train, y_train)
+            start = time.perf_counter()
             file_bayes_score = gb.score(X_test, y_test)
             stop = time.perf_counter()
             bayes_predictions = gb.predict(X_test)
             bayes_good_predictions = np.sum(y_test == bayes_predictions)
             plot_confusion_matrix(fig_bayes,d, y_test, bayes_predictions, cons_types, distribs[d],
-                                     bayes_good_predictions, n_test_items, stop - start)
+                                      bayes_good_predictions, n_test_items, stop - start)
 
 
             # Récupération des scores pour Bayes
@@ -123,14 +124,15 @@ if __name__ == '__main__':
 
             # Classification KPPV (KNN)
             knn = KNeighborsClassifier(n_neighbors=n_neighbors)
-            start = time.perf_counter()
             knn.fit(X_train, y_train)
+            start = time.perf_counter()
             file_knn_score = knn.score(X_test, y_test)
             stop = time.perf_counter()
+
             knn_predictions = knn.predict(X_test)
             knn_good_predictions = np.sum(y_test == knn_predictions)
             plot_confusion_matrix(fig_knn, d, y_test, knn_predictions, cons_types, distribs[d],
-                                   knn_good_predictions, n_test_items, stop - start)
+                                    knn_good_predictions, n_test_items, stop - start)
 
             #Récupération des scores pour KNN
             file_knn_scores.append(file_knn_score)
