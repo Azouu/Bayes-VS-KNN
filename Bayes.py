@@ -48,16 +48,14 @@ class GaussianBayes(object):
             scores = np.empty(n_classes)
             x = X[i]
             for j in range(n_classes):
-                #print(self.sigma[j])
                 try :
-                    np.log(Decimal(np.linalg.det(self.sigma[j])))
+                    score = - (1/2) * (np.log(np.linalg.det(self.sigma[j])) + np.dot(np.dot((x - self.mu[j]), np.linalg.inv(self.sigma[j])), (x - self.mu[j])))
+                    if self.priors is not None:
+                        score += np.log(self.priors[j])
                 except :
-                    print(n_features)
-                    #print(Decimal(np.linalg.det(self.sigma[j])))
-                #print(np.linalg.det(self.sigma[j]))
-                score = - (1/2) * (np.log(np.linalg.det(self.sigma[j])) + np.dot(np.dot((x - self.mu[j]), np.linalg.inv(self.sigma[j])), (x - self.mu[j])))
-                if self.priors is not None:
-                    score += np.log(self.priors[j])
+                    # when there isn't enough training data, an exception will ocur because log function cannot be performed
+                    # we deal with it here
+                    score = None
                 scores[j] = score
             y[i] = np.argmax(scores)
         return y

@@ -23,7 +23,7 @@ cons_types = np.array(["aa", "ee", "eh", "eu", "ii", "oe", "oh", "oo", "uu", "yy
 files = np.array(["data2.csv", "data3.csv", "data12.csv"])
 
 # Taux de distribution des données (test / entrainement)
-distribs = np.arange(.1, 1., .1)
+distribs = np.arange(0.1, 0.9, 0.1)
 
 # Récupération des données
 def load_dataset(pathname:str) -> (np.ndarray, np.ndarray):
@@ -47,10 +47,10 @@ def plot_scatter_2d(X:np.ndarray, y:np.ndarray) -> None:
     plt.show()
 
 # Affichage d'une matrice de confusion
-def plot_confusion_matrix(i:int, y_test:np.ndarray, y_pred:np.ndarray, features:np.ndarray,
+def plot_confusion_matrix(fig, i:int, y_test:np.ndarray, y_pred:np.ndarray, features:np.ndarray,
                           distribution:float, rr1:int, rr2:int, exec_time:float) -> None:
     cm = confusion_matrix(y_test, y_pred)
-    ax = plt.subplot(3, 3, i + 1) # len(distribs) = 9 donc 3 x 3
+    ax = fig.add_subplot(2, 4, i + 1)
     ax.imshow(cm)
     ax.set_xticks(np.arange(len(features)))
     ax.set_yticks(np.arange(len(features)))
@@ -85,6 +85,7 @@ if __name__ == '__main__':
     knn_scores = []
     exec_time_t_knn = []
     dimensions = []
+    i = 0
     for f in range(len(files)):
         file_knn_scores = []
         file_bayes_scores = []
@@ -93,9 +94,10 @@ if __name__ == '__main__':
         X, y = load_dataset(os.path.join(path, files[f]))
         #plot_scatter_2d(X,y)
         dimensions.append(X.shape[-1])
-        # plt.figure(figsize=(12., 13.))
+        fig_bayes = plt.figure(figsize=(12., 24.))
+        fig_knn = plt.figure(figsize=(12., 24.))
         for d in range(len(distribs)):
-            X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=distribs[d], random_state=0)
+            X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=distribs[d], random_state=5)
             #print("X_train: {}".format(X_train))
             #print("X_test: {}".format(X_test))
             #print("y_train: {}".format(y_train))
@@ -103,7 +105,6 @@ if __name__ == '__main__':
 
             n_neighbors = len(cons_types)
             n_test_items = len(X_test)
-
             # Classification Bayes
             gb = GaussianBayes(priors=None)  # Comme on considère que les priors de KNN sont uniformes, on fait de même pour Bayes
             start = time.perf_counter()
@@ -112,9 +113,8 @@ if __name__ == '__main__':
             stop = time.perf_counter()
             bayes_predictions = gb.predict(X_test)
             bayes_good_predictions = np.sum(y_test == bayes_predictions)
-            # plt.figure(0)
-            #plot_confusion_matrix(d, y_test, bayes_predictions, cons_types, distribs[d],
-            #                        bayes_good_predictions, n_test_items, stop - start)
+            plot_confusion_matrix(fig_bayes,d, y_test, bayes_predictions, cons_types, distribs[d],
+                                     bayes_good_predictions, n_test_items, stop - start)
 
 
             # Récupération des scores pour Bayes
@@ -129,23 +129,19 @@ if __name__ == '__main__':
             stop = time.perf_counter()
             knn_predictions = knn.predict(X_test)
             knn_good_predictions = np.sum(y_test == knn_predictions)
-            # plt.figure(1)
-            #plot_confusion_matrix(d, y_test, knn_predictions, cons_types, distribs[d],
-            #                      knn_good_predictions, n_test_items, stop - start)
+            plot_confusion_matrix(fig_knn, d, y_test, knn_predictions, cons_types, distribs[d],
+                                   knn_good_predictions, n_test_items, stop - start)
 
-            # Récupération des scores pour KNN
+            #Récupération des scores pour KNN
             file_knn_scores.append(file_knn_score)
             file_exec_time_knn.append(stop - start)
 
-        # plt.figure(0)
-        # plt.suptitle("Matrices de confusion pour Bayes avec {} dimensions :".format(dimensions[f]), y=.92)
-        # #plt.show()
-        #
-        # plt.figure(1)
-        # plt.suptitle("Matrices de confusion pour KPPV avec {} dimensions :".format(dimensions[f]), y=.92)
-        #plt.show()
+        fig_bayes.suptitle("Matrices de confusion pour Bayes avec {} dimensions :".format(dimensions[f]), y=.92)
+        plt.show()
+        fig_knn.suptitle("Matrices de confusion pour KPPV avec {} dimensions :".format(dimensions[f]), y=.92)
+        plt.show()
 
-        bayes_scores.append(file_bayes_score)
+        bayes_scores.append(file_bayes_scores)
         exec_time_t_bayes.append(file_exec_time_bayes)
 
         knn_scores.append(file_knn_scores)
@@ -154,9 +150,9 @@ if __name__ == '__main__':
 
 
     # Courbe d'évolution de la précision pour le classifieur Bayes
-    #plot_accur_evolution("Bayes", bayes_scores, distribs, dimensions, "Score de précision")
-    #plot_accur_evolution("Bayes", exec_time_t_bayes, distribs, dimensions, "Temps d'exécution")
+    plot_accur_evolution("Bayes", bayes_scores, distribs, dimensions, "Score de précision")
+    plot_accur_evolution("Bayes", exec_time_t_bayes, distribs, dimensions, "Temps d'exécution")
 
     # Courbe d'évolution de la précision pour le classifieur KPPV
-    #plot_accur_evolution("KPPV", knn_scores, distribs, dimensions, "Score de précision")
-    #plot_accur_evolution("Bayes",exec_time_t_knn, distribs, dimensions, "Temps d'exécution")
+    plot_accur_evolution("KPPV", knn_scores, distribs, dimensions, "Score de précision")
+    plot_accur_evolution("KPPV",exec_time_t_knn, distribs, dimensions, "Temps d'exécution")
